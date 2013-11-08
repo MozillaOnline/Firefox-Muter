@@ -1,19 +1,21 @@
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
-/* Addon bar switch button icon */
-toolbar[id="addon-bar"] #muter-toolbar-palette-button image[class="toolbarbutton-icon"]{
-  height: 16px;
+#muter-toolbar-palette-button {
+  list-style-image: url("chrome://muter/skin/icon16.png") !important;
+  -moz-image-region: rect(0, 16px, 16px, 0);
+  -moz-box-orient: horizontal;
 }
 
-/* Navigation bar switch button with small icon */
-#muter-toolbar-palette-button image[class="toolbarbutton-icon"] {
-  background-color:transparent;
-  height: 18px;
+#muter-toolbar-palette-button:-moz-lwtheme-brighttext {
+  list-style-image: url("chrome://muter/skin/icon16-inverted.png") !important;
 }
 
-/* Navigation bar switch button with large icon */
-toolbox[iconsize="large"] #muter-toolbar-palette-button image[class="toolbarbutton-icon"]{
-  height: 24px;
+#TabsToolbar:last-child :-moz-any(#muter-toolbar-palette-button) {
+  list-style-image: url("chrome://muter/skin/icon16-inverted.png") !important;
+}
+
+#muter-toolbar-palette-button.mute-enabled {
+  -moz-image-region: rect(16px, 16px, 32px, 0);
 }
 
 image.muter-shadow-image {

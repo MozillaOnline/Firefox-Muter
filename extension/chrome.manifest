@@ -7,6 +7,9 @@ overlay chrome://browser/content/browser.xul    chrome://muter/content/overlay.x
 overlay chrome://navigator/content/navigator.xul chrome://muter/content/overlay.xul
 style   chrome://global/content/customizeToolbar.xul    chrome://muter/skin/muter.css
 
+override  chrome://muter/skin/icon16.png  chrome://muter/skin/icon16-mac.png  os=Darwin
+
+
 locale  muter   ca  chrome/locale/ca/
 locale  muter   cs  chrome/locale/cs/
 locale  muter   de  chrome/locale/de/

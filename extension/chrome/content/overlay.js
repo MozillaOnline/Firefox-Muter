@@ -124,21 +124,13 @@ var muter = (function() {
     updateUI: function() {
       let isMuted = muterHook.isMuteEnabled();
 
-      // Changes the button status icon
-      var image_disabled="chrome://muter/skin/mute-disabled.png";
-      var image_enabled="chrome://muter/skin/mute-enabled.png";
-
       let btn = document.getElementById("muter-toolbar-palette-button");
       if (btn) {
-        let icon = isMuted ? image_enabled : image_disabled;
-        btn.setAttribute("image", icon);
-      }
-
-      // For SeaMonkey only
-      let statusbarBtn = document.getElementById("muter-statusbar-button");
-      if (statusbarBtn) {
-        let icon = statusbarBtn.getAttribute(isMuted ? 'image-enabled' : 'image-disabled');
-        statusbarBtn.setAttribute("image", icon);
+        if (isMuted) {
+          btn.classList.add("mute-enabled");
+        } else {
+          btn.classList.remove("mute-enabled");
+        }
       }
     },
 
