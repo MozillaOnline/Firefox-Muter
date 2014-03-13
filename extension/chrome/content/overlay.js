@@ -58,6 +58,7 @@ var muter = (function() {
         Services.prefs.setBoolPref('extensions.firefox-muter.firstRun', false);
       }
 
+      muter.logUsage();
       muter.updateUI();
       muter.setupShortcut();
 
@@ -158,6 +159,14 @@ var muter = (function() {
         addonbar.setAttribute("collapsed", "false");
       }
       document.persist(addonbar.id, "collapsed");
+    },
+
+    logUsage: function() {
+      try {
+        Cu.import('resource://cmtracking/ExtensionUsage.jsm', this);
+        this.ExtensionUsage.register('muter-toolbar-palette-button', 'window:button',
+          'muter@mozillaonline.com');
+      } catch(e) {};
     },
 
     setupShortcut: function() {
