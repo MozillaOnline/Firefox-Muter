@@ -5,7 +5,7 @@
   <em:id>muter@mozillaonline.com</em:id>
   <em:name>Firefox Muter</em:name>
   <em:type>2</em:type>
-  <em:version>1.0.2</em:version>
+  <em:version>1.0.3</em:version>
   <em:description>You can turn off all the sound from webpages by this add-on, such as audio, voices in the video,  background music, and so on.</em:description>
   <em:creator>Mozilla Online</em:creator>
   <em:homepageURL>http://www.firefox.com.cn/</em:homepageURL>
@@ -18,7 +18,7 @@
     <Description>
       <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
       <em:minVersion>4.0</em:minVersion>
-      <em:maxVersion>22.*</em:maxVersion>
+      <em:maxVersion>28.*</em:maxVersion>
     </Description>
   </em:targetApplication>
 
