@@ -1,3 +1,4 @@
+/* vim: set ts=2 et sw=2 tw=80: */
 /* ***** BEGIN LICENSE BLOCK *****
  * This Source Code is subject to the terms of the Mozilla Public License
  * version 2.0 (the "License"). You can obtain a copy of the License at
@@ -18,6 +19,7 @@
  * Contributor(s):
  *  Yuan Xulei <xyuan@mozilla.com>
  *  Hector Zhao <bzhao@mozilla.com>
+ *  Rui You <ryou@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,10 +37,10 @@
 
 var muter = (function() {
   let jsm = {};
-  Components.utils.import("resource://muter/muterUtils.jsm", jsm);
-  Components.utils.import("resource://muter/muterHook.jsm", jsm);
-  Components.utils.import("resource://gre/modules/Services.jsm", jsm);
-  Components.utils.import("resource://gre/modules/AddonManager.jsm", jsm);
+  Cu.import("resource://muter/muterUtils.jsm", jsm);
+  Cu.import("resource://muter/muterHook.jsm", jsm);
+  Cu.import("resource://gre/modules/Services.jsm", jsm);
+  Cu.import("resource://gre/modules/AddonManager.jsm", jsm);
   let {
     muterUtils, muterHook, Services, AddonManager
   } = jsm;
@@ -47,79 +49,38 @@ var muter = (function() {
     // Monitors the mute status and updates the UI
     _muterObserver: null,
 
+    strings: {
+      _bundle: Services.strings.createBundle('chrome://muter/locale/muter.properties'),
+      get: function(name, args) {
+        if (args) {
+          args = Array.prototype.slice.call(arguments, 1);
+          return this._bundle.formatStringFromName(name, args, args.length);
+        } else {
+          return this._bundle.GetStringFromName(name);
+        }
+      }
+    },
+
     init: function(event) {
       window.removeEventListener("load", muter.init, false);
 
       muterHook.open();
 
-      let firstRun = Services.prefs.getBoolPref('extensions.firefox-muter.firstRun');
-      if (firstRun) {
-        muter.showButton();
-        Services.prefs.setBoolPref('extensions.firefox-muter.firstRun', false);
-      }
-
+      muter.showButton('muter-toolbar-palette-button');
       muter.logUsage();
       muter.updateUI();
-      muter.setupShortcut();
-
-
-      window.addEventListener("aftercustomization", muter._onToolBarChanged, false);
-      muter._onToolBarChanged();
 
       muter._muterObserver = new MuterObserver();
       muter._muterObserver.register();
-
-      // restore mute status if necessary
-      let needRetoreMuteStatus = Services.prefs.getBoolPref('extensions.firefox-muter.saveStatus');
-      if (needRetoreMuteStatus) {
-        let needMute = Services.prefs.getBoolPref('extensions.firefox-muter.muteStatus');
-        muterHook.enableMute(needMute);
-      }
     },
 
     destroy: function(event) {
-      window.removeEventListener("aftercustomization", muter._onAddonBarChanged, false);
       muterHook.close();
-    },
-
-    uninstall: function() {
-      // Clear all user preferences
-      Services.prefs.deleteBranch('extensions.firefox-muter.');
     },
 
     switchStatus: function(event) {
       let shouldMute = !muterHook.isMuteEnabled();
       muterHook.enableMute(shouldMute);
-      Services.prefs.setBoolPref('extensions.firefox-muter.muteStatus', shouldMute);
-    },
-
-    clickSwitchButton: function(event) {
-      if (event.button == 0) {
-        // Left button click
-        if (event.currentTarget.id === 'muter-statusbar-button') {
-          muter.switchStatus();
-        }
-      } else if (event.button == 2) {
-        // Right click to show the popup menu
-        let btn = event.currentTarget;
-        let menu = document.getElementById("muter-switch-button-popup-menu");
-        if (btn && menu) {
-          menu.openPopup(btn, "after_start", -1, 0, true, false);
-        }
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    },
-
-
-    /** Open Settings dialog */
-    openSettingsDialog: function(event) {
-      event.stopPropagation();
-
-      // For the usage of window.showModalDialog, refer to
-      // https://developer.mozilla.org/en/DOM/window.showModalDialog
-      let url = 'chrome://muter/content/muterSettings.xul';
-      window.showModalDialog(url);
     },
 
     updateUI: function() {
@@ -136,29 +97,19 @@ var muter = (function() {
     },
 
     /** Add the muter button to the addon bar or remove it */
-    showButton: function() {
-      let addonbar = document.getElementById("addon-bar");
-      if (!addonbar)
+    showButton: function(aId) {
+      let widget = CustomizableUI.getWidget(aId);
+      if (widget && widget.provider == CustomizableUI.PROVIDER_API) {
         return;
-
-      let curSet = addonbar.currentSet.replace(/\s/g, '').split(',');
-      let index = curSet.indexOf("muter-toolbar-palette-button");
-      if (-1 == index) {
-        curSet.push("muter-toolbar-palette-button");
       }
-      let newSetString = curSet.join();
 
-      addonbar.currentSet = newSetString;
-      addonbar.setAttribute("currentset", newSetString);
-
-      document.persist(addonbar.id, "currentset");
-      try {
-        BrowserToolboxCustomizeDone(true);
-      } catch (e) {}
-      if (addonbar.getAttribute("collapsed") == "true") {
-        addonbar.setAttribute("collapsed", "false");
-      }
-      document.persist(addonbar.id, "collapsed");
+      CustomizableUI.createWidget({
+        id: aId,
+        defaultArea: CustomizableUI.AREA_NAVBAR,
+        label: this.strings.get('muter-button.label'),
+        tooltiptext: this.strings.get('muter-button.tooltip'),
+        onCommand : this.switchStatus
+      });
     },
 
     logUsage: function() {
@@ -167,37 +118,11 @@ var muter = (function() {
         this.ExtensionUsage.register('muter-toolbar-palette-button', 'window:button',
           'muter@mozillaonline.com');
       } catch(e) {};
-    },
-
-    setupShortcut: function() {
-      try {
-        let keyItem = document.getElementById('key_muterToggle');
-        if (keyItem) {
-          // Default key is "M"
-          keyItem.setAttribute('key', Services.prefs.getCharPref('extensions.firefox-muter.shortcut.key'));
-          // Default modifiers is "control alt"
-          keyItem.setAttribute('modifiers', Services.prefs.getCharPref('extensions.firefox-muter.shortcut.modifiers'));
-        }
-      } catch (e) {}
-    },
-
-    _onToolBarChanged: function(event) {
-      Services.prefs.setBoolPref('extensions.firefox-muter.showInAddonBar', muter._isButtonShowInAddonBar());
-    },
-
-    _isButtonShowInAddonBar: function() {
-      let addonbar = document.getElementById("addon-bar");
-      if (addonbar) {
-        let curSet = addonbar.currentSet;
-        return curSet.indexOf("muter-toolbar-palette-button") != -1;
-      }
-      return false;
     }
   };
 
-  const PREF_BRANCH = "extensions.firefox-muter.";
   /**
-   * Observer monitering the mute status, preferences and addon disable/uninstall.
+   * Observer monitering the mute status.
    * If the status is changed, updates the UI of each window.
    */
   function MuterObserver() {};
@@ -208,32 +133,15 @@ var muter = (function() {
     observe: function(subject, topic, data) {
       if (topic === "muter-status-changed") {
         muter.updateUI();
-      } else if (topic === "nsPref:changed") {
-        if (prefName.indexOf("shortcut.") != -1) {
-          muter.setupShortcut();
-        }
       }
     },
 
     register: function() {
       Services.obs.addObserver(this, "muter-status-changed", false);
-      this._branch = Services.prefs.getBranch(PREF_BRANCH);
-      if (this._branch) {
-        // nsIPrefBranch2 has been merged into nsIPrefBranch in Gecko 13. Once we drop support for old versions of Gecko, we should stop using nsIPrefBranch2.
-        try {
-          this._branch.QueryInterface(Components.interfaces.nsIPrefBranch2);
-        } catch (ex) {
-        }
-        this._branch.addObserver("", this, false);
-      }
-
     },
 
     unregister: function() {
       Services.obs.removeObserver(this, "muter-status-changed");
-      if (this._branch) {
-        this._branch.removeObserver("", this);
-      }
     },
 
   };

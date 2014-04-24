@@ -6,19 +6,4 @@
 <!DOCTYPE overlay SYSTEM "chrome://muter/locale/muter.dtd">
 <overlay id="muter-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   <script type="application/x-javascript" src="chrome://muter/content/overlay.js" />
-  <commandset id="mainCommandSet">
-    <command id="cmd_muterToggle" oncommand="muter.switchStatus();" />
-  </commandset>
-  <keyset id="mainKeyset">
-    <key id="key_muterToggle" command="cmd_muterToggle" modifiers="accel any shift" key="M" />
-  </keyset>
-  <!-- Toolbar button-->
-  <toolbarpalette id="BrowserToolbarPalette">
-    <toolbarbutton id="muter-toolbar-palette-button"
-                   type="button"
-                   class="toolbarbutton-1 toolbarbutton-ce"
-                   label="&muter-button.label;"
-                   tooltiptext="&muter-button.tooltip;"
-                   command='cmd_muterToggle'/>
-  </toolbarpalette>
 </overlay>
